@@ -12,9 +12,9 @@
 			mLoadareaObj = document.getElementById( "loadarea" );
             var existsTables = localStorage.getItem(mTableListKey);
             if ( existsTables ) {
-                var tableList = existsTables.split("");
+                var tableList = JSON.parse( existsTables );
                 for ( var idx in tableList ) {
-                    addTableListDisplay(tableList[idx], (idx === 0) ? true : false);
+                    addTableListDisplay(tableList[idx]["t"], (idx === 0) ? true : false);
                 }
             }
  
@@ -47,38 +47,42 @@
 	//		mLoadareaObj.value = text;
 			var showDiv = document.getElementById("showbox");
 			//alert(text);
-			var child = createMsgBox(text, 0);
+			var child = createMemoBox(text, 0);
 			showDiv.appendChild(child);
 		}
 
         function saveMemo() {
             var memo = document.getElementById( "savearea" ).value;
 
-            if ( memo === "" ) return;
-            var tableName = findCheckedRadio().id;
-            addLocalStorage( tableName, memo );
+            if ( ! memo ) return;
+            var tableid = findCheckedRadio().id;
+            var memoobj = createMemoObj( memo );
+            var memoid = addLocalStorage( tableid, memoobj );
 
 			var showDiv = document.getElementById("showbox");
-            var msg = createMsgBox(memo, 0);
+            var msg = createMemoBox(memoobj, memoid);
 			showDiv.insertBefore(msg, showDiv.firstChild);
 
             document.getElementById( "savearea" ).value = "";
         }
 
-        function addLocalStorage( tableid, memo ) {
+        function addLocalStorage( tableid, memoobj ) {
             var original = localStorage.getItem( tableid );
             var saveData;
-            if (original === "" ) {
-                saveData = createSaveData( tableid, memo );
+            if ( ! original ) {
+                saveData = {};
             } else {
-                saveData = original + "" + JSON.stringify(createSaveData( tableid, memo ));
+                saveData = JSON.parse(original);
             }
-            localStorage.setItem( tableid, saveData );
+            var memoid = createLatestMemoId();
+            saveData[memoid] = memoobj;
+            localStorage.setItem( tableid, JSON.stringify(saveData) );
+
+            return memoid;
         }
 
-        function createSaveData( tableid, memo ) {
-            return {"tid":tableid,
-                "m":memo,
+        function createMemoObj( memo ) {
+            return {"m":memo,
                 "t":new Date().getTime()};
         }
 
@@ -88,14 +92,14 @@
             if ( ! latestId ) {
                 latestId = 0;
             } else {
-                latestId = tableData[tableid] + 1;
+                latestId = parseInt(latestId) + 1;
             }
             localStorage.setItem( mMemoLatestId, latestId );
 
             return latestId;
         }
 
-		function createMsgBox(text, msg_id) {
+		function createMemoBox(msg_obj, msg_id) {
 			var dltbtn = document.createElement("button");
 			dltbtn.style.cssText = "border:solid 1px gray; color:gray;";
 			dltbtn.setAttribute("id", msg_id);
@@ -103,9 +107,19 @@
 
 			var msgbox = document.createElement("div");
 			msgbox.style.cssText = "border:solid 1px black; margin:5px";
-			msg = document.createElement("div");
+
+			var msgdatebox = document.createElement("div");
+			msgdatebox.style.cssText = "width:200px; border:solid 1px black;float:left";
+            var msg_date = new Date();
+            msg_date.setTime(msg_obj.t);
+			msgdatebox.innerHTML = msg_date.getFullYear()  + "/" + (msg_date.getMonth() + 1) + "/" + msg_date.getDate() + " " + 
+                msg_date.getHours() + ":" + msg_date.getMinutes() + ":" + msg_date.getSeconds();
+
+			var msg = document.createElement("div");
 			msg.style.cssText = "width:200px; border:solid 1px black;float:left";
-			msg.innerHTML = text;
+			msg.innerHTML = msg_obj.m;
+
+			msgbox.appendChild(msgdatebox);
 			msgbox.appendChild(msg);
 			msgbox.appendChild(dltbtn);
 			return msgbox;
@@ -145,10 +159,10 @@
             // console.log("revert to " + tableid );
             var memodataelem = localStorage.getItem( tableid )
             if ( ! memodataelem ) return;
-            var memodata = memodataelem.split("") ;
+            var memodata = JSON.parse( memodataelem );
 			var showDiv = document.getElementById("showbox");
             for ( var idx in memodata ){
-			    var child = createMsgBox(memodata[idx], 0);
+			    var child = createMemoBox(memodata[idx], idx);
 			    showDiv.appendChild(child);
             }
                 
@@ -175,17 +189,20 @@
             var keyStr;
             // null判定ってこれでいいの？
             if ( ! text ) {
-                keyStr = tableName;
+                var keyList = [];
+                keyList[0] = {"t":tableName};
+                keyStr = JSON.stringify( keyList );
             } else {
-                var keyList = text.split("");
+                var keyList = JSON.parse(text);
                 for ( var idx in keyList ){
-                    if ( keyList[idx] === tableName ){
-                        console.log(keyList[idx] + " but " +  tableName + " found in " + idx);
+                    if ( keyList[idx]["t"] === tableName ){
+                        console.log(keyList[idx]["t"] + " but " +  tableName + " found in " + idx);
                         console.log("already exists : " + tableName);
                         return;
                     }
                 }
-                keyStr = text + "" + tableName;
+                keyList[keyList.length] = {"t":tableName};
+                keyStr = JSON.stringify( keyList );
             }
             localStorage.setItem( mTableListKey, keyStr );
 

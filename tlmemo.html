@@ -23,29 +23,36 @@
     * "http://www22.atwiki.jp/shingoo/pages/45.html"
     * 
     -->
+    <div id="header">
+        <h1>タイムライン帳(仮)</h1>
+    </div>
 
-    <form>
-        <input type="text" id="new_table_name"></input>
-        <button type="button" id="create_new_table" onClick="createNewTable()">追加</button>
-        <div id="table_list_display">
-            <div>
-                <input type="radio" name="memo_table" id="hoge" checked onClick="readTable()" />
-                <label for="hoge">hoge</label>
-                <button type="button" id="hoge_delete" > X </button>
-            </div>
-            <div>
-                <input type="radio" name="memo_table" id="fuga"  onClick="readTable()" />
-                <label for="fuga">fuga</label>
-                <button type="button" id="fuga_delete" > X </button>
+    <div id="tlmemowrapper">
+        <div id="tllist">
+            <form>
+                <div>タイムラインを追加する</div>
+                <input type="text" id="new_table_name"></input>
+                <button type="button" id="create_new_table" onClick="createNewTable()">追加</button>
+                <h2>タイムライン一覧</h2>
+                <div id="table_list_display">
+                </div>
+            </form>
+        </div>
+
+        <!-- timelineは複数表示するかも -->
+        <div class="timeline">
+            <form>
+                <textarea id="savearea" placeholder="メモの内容を記述"></textarea>
+                <br>
+                <button type="button" id="savebtn" onClick="saveMemo();"> 保存 </button>
+            </form>
+            <h3>タイムライン</h3>
+            <div id="showbox">
             </div>
         </div>
-        <textarea id="savearea" placeholder="メモの内容を記述"></textarea>
-        <br>
-        <button type="button" id="savebtn" onClick="saveMemo();"> 保存 </button>
-        <button type="reset" id="clearbtn"> クリア </button>
-    </form>
-    <div style="border-bottom:solid 3px black;">表示する場所</div>
-    <div id="showbox">
+
+    </div>
+    <div if="footer">
     </div>
 </body>
 </html>

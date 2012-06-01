@@ -1,0 +1,19 @@
+div {
+    border:solid 1px aliceblue;
+}
+
+div#header {
+    background-color:green;
+}
+
+div#tllist {
+    float:left;
+    width:200px;
+    background-color:lightgreen;
+    height:100%;
+}
+
+div.timeline {
+    margin-left:200px;
+    background-color:;
+}
