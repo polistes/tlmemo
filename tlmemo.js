@@ -17,40 +17,8 @@
                     addTableListDisplay(tableList[idx]["t"], (idx === 0) ? true : false);
                 }
             }
- 
-			// イベントリスナを登録する
-//			mSaveareaObj.addEventListener( "keyup", onkeyupEvent );	// 保存エリアでタイピングされたら発動
 		}
  
-		/**
-		 * タイピングされた時のイベント処理
-		 */
-		function onkeyupEvent() {
-//			saveLocalStorage();	// 保存
-			loadLocalStorage();	// すぐさま読み込む
-		}
- 
-		/**
-		 * 保存エリアの内容をローカルストレージに保存する
-		 */
-		function saveLocalStorage() {
-			var text = mSaveareaObj.value;
-			localStorage.setItem( mSaveKey, text );
-		}
- 
-		/**
-		 * 読み込みエリアにローカルストレージの内容を読み込み、表示する
-		 */
-		function loadLocalStorage() {
-			var text = mSaveareaObj.value;
-			//var text = localStorage.getItem( mSaveKey );
-	//		mLoadareaObj.value = text;
-			var showDiv = document.getElementById("showbox");
-			//alert(text);
-			var child = createMemoBox(text, 0);
-			showDiv.appendChild(child);
-		}
-
         function saveMemo() {
             var memo = document.getElementById( "savearea" ).value;
 
@@ -100,28 +68,28 @@
         }
 
 		function createMemoBox(msg_obj, msg_id) {
+			var msgbox = document.createElement("div");
+            msgbox.setAttribute("class", "msgbox");
+
 			var dltbtn = document.createElement("button");
-			dltbtn.style.cssText = "border:solid 1px gray; color:gray;";
+            dltbtn.setAttribute("class", "dltbtn");
 			dltbtn.setAttribute("id", msg_id);
 			dltbtn.innerHTML = "x";
 
-			var msgbox = document.createElement("div");
-			msgbox.style.cssText = "border:solid 1px black; margin:5px";
-
 			var msgdatebox = document.createElement("div");
-			msgdatebox.style.cssText = "width:200px; border:solid 1px black;float:left";
+            msgdatebox.setAttribute("class", "datebox");
             var msg_date = new Date();
             msg_date.setTime(msg_obj.t);
 			msgdatebox.innerHTML = msg_date.getFullYear()  + "/" + (msg_date.getMonth() + 1) + "/" + msg_date.getDate() + " " + 
                 msg_date.getHours() + ":" + msg_date.getMinutes() + ":" + msg_date.getSeconds();
 
 			var msg = document.createElement("div");
-			msg.style.cssText = "width:200px; border:solid 1px black;float:left";
+            msg.setAttribute("class", "sentence");
 			msg.innerHTML = msg_obj.m;
 
 			msgbox.appendChild(msgdatebox);
-			msgbox.appendChild(msg);
 			msgbox.appendChild(dltbtn);
+			msgbox.appendChild(msg);
 			return msgbox;
 		}
 

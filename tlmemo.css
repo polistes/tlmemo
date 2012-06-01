@@ -17,3 +17,25 @@ div.timeline {
     margin-left:200px;
     background-color:;
 }
+
+div.msgbox {
+    border:solid 1px black;
+    margin:5px;
+}
+
+div.msgbox button.dltbtn {
+    border:solid 1px gray;
+    color:gray;
+}
+
+
+div.msgbox div.datebox {
+    width:200px;
+    border:solid 1px black;
+    float:left;
+}
+
+div.msgbox div.sentence {
+    width:200px;
+    border:solid 1px black;
+}
