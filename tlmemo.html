@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset=UTF-8>
-	<title>ローカルストレージの使用テスト</title>
+    <title>タイムライン帳(仮)</title>
     <meta http-equiv="Content-Style-Type" content="text/css">
     <link type="text/css" rel="stylesheet" href="./tlmemo.css">
 
@@ -27,28 +27,31 @@
         <h1>タイムライン帳(仮)</h1>
     </div>
 
-    <div id="tlmemowrapper">
-        <div id="tllist">
+    <div id="contents_wrapper">
+        <div id="titlelist">
             <form>
                 <div>タイムラインを追加する</div>
-                <input type="text" id="new_table_name"></input>
-                <button type="button" id="create_new_table" onClick="createNewTable()">追加</button>
+                <input type="text" id="new_time_line_name"></input>
+                <!--<button type="button" id="create_new_table" onClick="createNewTimeLine()">追加</button> -->
+                <button type="button" id="create_new_time_line">追加</button>
                 <h2>タイムライン一覧</h2>
-                <div id="table_list_display">
+                <div id="time_line_list_display">
                 </div>
             </form>
         </div>
 
         <!-- timelineは複数表示するかも -->
-        <div class="timeline">
+        <div id="tl_wrapper">
+            <!--
             <form>
                 <textarea id="savearea" placeholder="メモの内容を記述"></textarea>
                 <br>
-                <button type="button" id="savebtn" onClick="saveMemo();"> 保存 </button>
+                <button type="button" id="savebtn"> 保存 </button>
             </form>
             <h3>タイムライン</h3>
             <div id="showbox">
             </div>
+            -->
         </div>
 
     </div>

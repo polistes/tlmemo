@@ -1,41 +1,48 @@
+(function () {
 		var mSaveKey = "textarea_data_key";
 		var mSaveareaObj;	// 保存エリア
 		var mLoadareaObj;	// 読み込みエリア
 
-        var mTableListKey = "tlmemo_table_list_key"
-        var mTablePrefix = "tlmemo_table_name_"
+        var mTimeLineListKey = "tlmemo_table_list_key"
+        var mTimeLineIdPrefix = "tlmemo_table_name_"
         var mMemoLatestId = "tlmemo_memo_lastest_id"
+        var mTLMemoLatestId = "tlmemo_timeline_latest_id"
  
 		window.onload = function() {
 			// ＤＯＭオブジェクトを読み込む
 			mSaveareaObj = document.getElementById( "savearea" );
 			mLoadareaObj = document.getElementById( "loadarea" );
-            var existsTables = localStorage.getItem(mTableListKey);
+            var existsTables = localStorage.getItem(mTimeLineListKey);
             if ( existsTables ) {
-                var tableList = JSON.parse( existsTables );
-                for ( var idx in tableList ) {
-                    addTableListDisplay(tableList[idx]["t"], (idx === 0) ? true : false);
+                var timeLineList = JSON.parse( existsTables );
+                for ( var idx in timeLineList ) {
+                    // 1:disp, 0:not disp
+                    addNewTimeLine2List(timeLineList[idx]["t"], timeLineList[idx]["dsp"] == 1  );
                 }
             }
+
+            var createNewTLBtn = document.getElementById("create_new_time_line");
+            createNewTLBtn.addEventListener("click", createNewTimeLine, false);
+
+            // var saveBtn = document.getElementById("savebtn");
+            // saveBtn.addEventListener("click", saveMemo, false);
 		}
  
-        function saveMemo() {
-            var memo = document.getElementById( "savearea" ).value;
-
+        function saveMsg(timeLineName){
+            var memo = document.getElementById( "memoarea" + timeLineName ).value;
             if ( ! memo ) return;
-            var tableid = findCheckedRadio().id;
             var memoobj = createMemoObj( memo );
-            var memoid = addLocalStorage( tableid, memoobj );
+            var memoid = addLocalStorage( mTimeLineIdPrefix + timeLineName , memoobj );
 
-			var showDiv = document.getElementById("showbox");
-            var msg = createMemoBox(memoobj, memoid);
+			var showDiv = document.getElementById( "showbox" + timeLineName );
+            var msg = createMemoBox(memoobj, memoid, timeLineName);
 			showDiv.insertBefore(msg, showDiv.firstChild);
 
-            document.getElementById( "savearea" ).value = "";
+            document.getElementById( "memoarea" + timeLineName ).value = "";
         }
 
-        function addLocalStorage( tableid, memoobj ) {
-            var original = localStorage.getItem( tableid );
+        function addLocalStorage( timeLineId, memoobj ) {
+            var original = localStorage.getItem( timeLineId );
             var saveData;
             if ( ! original ) {
                 saveData = {};
@@ -44,7 +51,8 @@
             }
             var memoid = createLatestMemoId();
             saveData[memoid] = memoobj;
-            localStorage.setItem( tableid, JSON.stringify(saveData) );
+            // console.log(saveData);
+            localStorage.setItem( timeLineId, JSON.stringify(saveData) );
 
             return memoid;
         }
@@ -52,6 +60,19 @@
         function createMemoObj( memo ) {
             return {"m":memo,
                 "t":new Date().getTime()};
+        }
+
+        function createLatestTimeLineId () {
+            var latestId = localStorage.getItem( mTLMemoLatestId );
+
+            if ( ! latestId ) {
+                latestId = 0;
+            } else {
+                latestId = parseInt(latestId) + 1;
+            }
+            localStorage.setItem( mTLMemoLatestId, latestId );
+
+            return latestId;
         }
 
         function createLatestMemoId () {
@@ -67,13 +88,18 @@
             return latestId;
         }
 
-		function createMemoBox(msg_obj, msg_id) {
+		function createMemoBox(msg_obj, msg_id, timeLineName) {
 			var msgbox = document.createElement("div");
             msgbox.setAttribute("class", "msgbox");
 
 			var dltbtn = document.createElement("button");
             dltbtn.setAttribute("class", "dltbtn");
 			dltbtn.setAttribute("id", msg_id);
+			dltbtn.addEventListener("click", (function(i){
+                    return function(){
+                        console.log("delete msg: " + msg_id + " in " + timeLineName); 
+                    };
+                })(timeLineName, msg_id), false);
 			dltbtn.innerHTML = "x";
 
 			var msgdatebox = document.createElement("div");
@@ -93,48 +119,87 @@
 			return msgbox;
 		}
 
-        function readTable() {
-            // 以前のテーブルから切り替える処理を入れようとしたけど、
-            // ラジオボタンのクリック動作に割り込まないといけないみたいなので
-            // やめる。
-            var checkedTable = findCheckedRadio();
-            if (! checkedTable) {
-                console.log("can't find checked table");
-                return;
-            }
-            // console.log(checkedTable.id + " -> " +  after);
-            // if (checkedTable.id === after ){ console.log("same"); }
+        function hiddenTimeLine(timeLineName){
+            var timeLine = document.getElementById( "timeline_id_" + timeLineName );
+            timeLine.parentNode.removeChild(timeLine);
+        }
 
-            var afterElem = document.getElementById(checkedTable.id);
-            if ( typeof afterElem === "undefined") return ;
-            afterElem.checked = true;
-
-            cleanupMemoDisplay();
+        function readTimeLine( timeLineName , position) {
+            // タイムラインを読み込む。
+            // いったんクリーンアップしているけど、
+            // 複数並列して表示できるようにしたい
+            cleanupTimeLine();
 
             // LocalStorageからメモを再読込
-            // TODO Storageに保持数IDと、ラジオ切り替えのIDを同じにしないと
-            revertMemoDisplay(checkedTable.id);
+            revertTimeLine( timeLineName, position);
         }
 
-        function cleanupMemoDisplay() {
-            // 表示領域を初期化            
-			var showDiv = document.getElementById("showbox");
-            while (showDiv.firstChild)
-                showDiv.removeChild(showDiv.firstChild);
+        // 表示領域を初期化            
+        function cleanupTimeLine() {
+			//var showDiv = document.getElementById("showbox");
+            //while (showDiv.firstChild)
+            //    showDiv.removeChild(showDiv.firstChild);
         }
 
-        function revertMemoDisplay( tableid ) {
-            // console.log("revert to " + tableid );
-            var memodataelem = localStorage.getItem( tableid )
-            if ( ! memodataelem ) return;
-            var memodata = JSON.parse( memodataelem );
-			var showDiv = document.getElementById("showbox");
-            for ( var idx in memodata ){
-			    var child = createMemoBox(memodata[idx], idx);
-			    showDiv.appendChild(child);
+        // タイムライン表示領域に指定IDのタイムラインを追加
+        // TODO set correcto position
+        function revertTimeLine( timeLineName , position) {
+            // console.log("revert to " + timeLineName );
+            var tlelem = createTimeLineElement( timeLineName );
+            var tlwrapper = document.getElementById("tl_wrapper");
+
+            tlwrapper.insertBefore( tlelem, tlwrapper.firstChild );
+        }
+
+        // メモの入力～タイムライン表示までの要素を作成する
+        function createTimeLineElement( timeLineName ){
+            mTimeLineIdPrefix + timeLineName;
+            var timeLine = document.createElement("div");
+            timeLine.setAttribute("class", "timeline");
+            timeLine.setAttribute("id", "timeline_id_" + timeLineName);
+            
+            var timeLineTitle = document.createElement("h5");
+            timeLineTitle.innerHTML=timeLineName;
+            timeLine.appendChild(timeLineTitle);
+
+            var timeLineInputArea = document.createElement("textarea");
+            timeLineInputArea.setAttribute("id", "memoarea" + timeLineName);
+            timeLineInputArea.setAttribute("placeholder", "メモの内容を記述");
+            timeLine.appendChild(timeLineInputArea);
+
+            var newline = document.createElement("br");
+            timeLine.appendChild(newline);
+
+            var timeLineSaveBtn = document.createElement("button");
+            timeLineSaveBtn.setAttribute("type", "button");
+            timeLineSaveBtn.setAttribute("id", "savebtn" + timeLineName);
+            timeLineSaveBtn.addEventListener("click", (function(timeLineName){
+                    return function(){
+                        // TODO つじつまを合わせないといけない。
+                        // セーブするとき…だけ？
+                        saveMsg(timeLineName);
+                    };
+                })( timeLineName ), false);
+            timeLineSaveBtn.innerHTML = "save";
+            timeLine.appendChild(timeLineSaveBtn);
+
+            var timeLineContents = document.createElement("div");
+            timeLineContents.setAttribute("id", "showbox" + timeLineName);
+            timeLine.appendChild(timeLineContents);
+
+            var memodataelem = localStorage.getItem( mTimeLineIdPrefix + timeLineName )
+            if ( memodataelem ) {
+                var memodata = JSON.parse( memodataelem );
+                for ( var idx in memodata ){
+                    // TODO idを正しい値にする
+			        var child = createMemoBox(memodata[idx], idx, timeLineName);
+			        timeLineContents.appendChild(child);
+                }
             }
-                
+
+            return timeLine;
         }
+
 
         function findCheckedRadio() {
             var radios = document.getElementsByName("memo_table");
@@ -147,71 +212,127 @@
             return undefined;
         }
 
-        function createNewTable() {
-            var tableNameElem = document.getElementById("new_table_name");
-            if ( typeof tableNameElem === "undefined" ) return;
-            var tableName = tableNameElem.value;
-            console.log(tableName);
+        // 
+        // time line
+        // 
 
-			var text = localStorage.getItem( mTableListKey );
+        function createNewTimeLine() {
+            // console.log("will create new time line");
+            
+            var tlInputElem = document.getElementById("new_time_line_name");
+            if ( ! tlInputElem ) return;
+
+            var timeLineName = tlInputElem.value;
+            // console.log("create new time line : " + timeLineName);
+
+			var text = localStorage.getItem( mTimeLineListKey );
             var keyStr;
-            // null判定ってこれでいいの？
             if ( ! text ) {
                 var keyList = [];
-                keyList[0] = {"t":tableName};
+                keyList[0] = { "t":timeLineName, "id":createLatestTimeLineId() };
                 keyStr = JSON.stringify( keyList );
             } else {
                 var keyList = JSON.parse(text);
+
+                // 重複確認
                 for ( var idx in keyList ){
-                    if ( keyList[idx]["t"] === tableName ){
-                        console.log(keyList[idx]["t"] + " but " +  tableName + " found in " + idx);
-                        console.log("already exists : " + tableName);
+                    if ( keyList[idx]["t"] === timeLineName ){
+                        console.log(keyList[idx]["t"] + " but " +  timeLineName + " found in " + idx);
+                        console.log("already exists : " + timeLineName);
+                        // TODO タイムラインの表示
                         return;
                     }
                 }
-                keyList[keyList.length] = {"t":tableName};
+                keyList[keyList.length] = {"t":timeLineName, "id":createLatestTimeLineId() };
                 keyStr = JSON.stringify( keyList );
             }
-            localStorage.setItem( mTableListKey, keyStr );
+            localStorage.setItem( mTimeLineListKey, keyStr );
 
-            tableNameElem.value = "";
+            tlInputElem.value = "";
 
-            addTableListDisplay(tableName, true);
-            cleanupMemoDisplay();
-            // revertMemoDisplay(mTablePrefix + tableName);
+            // タイムライン名をリストに追加
+            addNewTimeLine2List(timeLineName, true);
+            // タイムラインの表示領域を初期化
+            cleanupTimeLine();
+            // タイムラインを復元
+            // revertTimeLine( timeLineName, -1);
         }
 
-        function addTableListDisplay(tableName, select) {
-            var elem = document.getElementById("table_list_display");
-            if (!elem) {
-                console.log("table list display not found error");
+        // TL名のリストに新規TL名を追加する
+        function addNewTimeLine2List(timeLineName, select) {
+            var tlListElem = document.getElementById("time_line_list_display");
+            if ( ! tlListElem ) {
+                console.log("time line list display not found error");
                 return;
             }
 
-            var tableKey = mTablePrefix + tableName;
-            var tableList = document.createElement("div");
-
-            var tableListRadio = document.createElement("input");
-            tableListRadio.setAttribute("type", "radio");
-            tableListRadio.setAttribute("name", "memo_table");
-            tableListRadio.setAttribute("id", tableKey);
-            if (select) {
-                tableListRadio.checked = true;
+            var timeLineKey = mTimeLineIdPrefix + timeLineName;
+            var timeLineList = document.createElement("div");
+            timeLineList.setAttribute("id", timeLineKey);
+            if ( select ) {
+                timeLineList.setAttribute("class","checked");
+                // TODO set correct position
+                readTimeLine(timeLineName, -1);
+            } else {
+                timeLineList.setAttribute("class","unchecked");
             }
-            // tableListRadio.onclick = readTable;
-            tableListRadio.addEventListener("click", readTable, false);
-            tableList.appendChild(tableListRadio);
 
-            var tableListLabel = document.createElement("label");
-            tableListLabel.setAttribute("for", tableKey)
-            tableListLabel.innerHTML=tableName;
-            tableList.appendChild(tableListLabel);
+            var timeLineListRadio = document.createElement("button");
+            timeLineListRadio.setAttribute("type", "button");
+            timeLineListRadio.addEventListener("click", (function(timeLineName) {
+                    return function() {
+                        switchTimeLine (timeLineName);
+                    }
+                })( timeLineName ), false);
+            timeLineListRadio.innerHTML = timeLineName;
+            timeLineList.appendChild(timeLineListRadio);
 
-            var tableListDelete = document.createElement("button");
-            tableListDelete.setAttribute("type", "button");
-            tableListDelete.setAttribute("id", "delete_" + tableName);
-            tableListDelete.innerHTML="X"
-            tableList.appendChild(tableListDelete);
+            var timeLineListDelete = document.createElement("button");
+            timeLineListDelete.setAttribute("type", "button");
+            timeLineListDelete.innerHTML="X"
+            timeLineListDelete.addEventListener("click", (function(timeLineName) {
+                    return function() {
+                        deleteTimeLine(timeLineName)
+                    }
+                })( timeLineName ), false);
+            timeLineList.appendChild(timeLineListDelete);
 
-            elem.insertBefore(tableList, elem.firstChild);
+            tlListElem.insertBefore(timeLineList, tlListElem.firstChild);
         }
+
+        function switchTimeLine (timeLineName) {
+            var titleElem = document.getElementById( mTimeLineIdPrefix + timeLineName );
+            if ( ! titleElem ) return;
+            if ( titleElem.className === "checked" ) {
+                titleElem.setAttribute("class","unchecked");
+                hiddenTimeLine(timeLineName);
+                changeTitleInfoDisp(timeLineName, false, -1);
+            } else {
+                titleElem.setAttribute("class","checked");
+                // TODO set position
+                readTimeLine(timeLineName, -1);
+                changeTitleInfoDisp(timeLineName, true, -1);
+            }
+        }
+        
+
+        function changeTitleInfoDisp(timeLineName, disp, position) {
+                    console.log("try set disp -> " + disp);
+            var existsTablesJSON = localStorage.getItem( mTimeLineListKey );
+            if ( ! existsTablesJSON ) return;
+            var existsTables = JSON.parse( existsTablesJSON );
+            for ( var idx in  existsTables ){ 
+                if ( existsTables[idx]["t"] == timeLineName ){
+                    existsTables[idx]["dsp"] = disp ? 1 : 0;
+                    existsTables[idx]["pos"] = position;
+                    console.log("set disp -> " + disp);
+                    break;
+                }
+            }
+            localStorage.setItem( mTimeLineListKey, JSON.stringify(existsTables) );
+        }
+
+        function deleteTimeLine(timeLineName) {
+            console.log("delete time line : " + timeLineName);
+        }
+})()

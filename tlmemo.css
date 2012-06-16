@@ -6,16 +6,28 @@ div#header {
     background-color:green;
 }
 
-div#tllist {
+div#titlelist {
     float:left;
     width:200px;
     background-color:lightgreen;
     height:100%;
 }
 
-div.timeline {
+div.checked {
+    background-color:darkgreen;
+}
+
+div.unchecked {
+    background-color:forestgreen;
+}
+
+div#tl_wrapper {
     margin-left:200px;
-    background-color:;
+    background-color:lightblue;
+}
+
+div.timeline {
+    float:left;
 }
 
 div.msgbox {
