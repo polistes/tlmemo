@@ -193,7 +193,7 @@
                 for ( var idx in memodata ){
                     // TODO idを正しい値にする
 			        var child = createMemoBox(memodata[idx], idx, timeLineName);
-			        timeLineContents.appendChild(child);
+			        timeLineContents.insertBefore(child, timeLineContents.firstChild);
                 }
             }
 
