@@ -30,24 +30,26 @@ div.timeline {
     float:left;
 }
 
-div.msgbox {
+div.memobox {
     border:solid 1px black;
     margin:5px;
+    padding:3px;
+    background-color:mintcream;
 }
 
-div.msgbox button.dltbtn {
+div.memobox button.dltbtn {
     border:solid 1px gray;
     color:gray;
 }
 
 
-div.msgbox div.datebox {
-    width:200px;
-    border:solid 1px black;
+div.memobox div.datebox {
+    width:150px;
     float:left;
 }
 
-div.msgbox div.sentence {
+div.memobox div.sentence {
     width:200px;
-    border:solid 1px black;
+    padding:5px;
+    background-color:white;
 }

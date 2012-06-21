@@ -13,8 +13,27 @@
 			mSaveareaObj = document.getElementById( "savearea" );
 			mLoadareaObj = document.getElementById( "loadarea" );
             var existsTables = localStorage.getItem(mTimeLineListKey);
+
+
             if ( existsTables ) {
                 var timeLineList = JSON.parse( existsTables );
+                if ( Object.prototype.toString.call(timeLineList) == "[object Array]") {
+                    // isArray
+                    // TODO restruct data structure
+                    console.log(timeLineList);
+                    localStorage.setItem("old", JSON.stringify(timeLineList));
+                    var newTables = {};
+                    for ( var idx in timeLineList ) {
+                        var newData = timeLineList[idx];
+                        var titleStr = timeLineList[idx]["t"];
+                        console.log(titleStr);
+                        delete newData["t"];
+                        newTables[titleStr] = newData;
+                    }
+                    console.log(newTables);
+                    localStorage.setItem(mTimeLineListKey, JSON.stringify(newTables));
+                }
+
                 for ( var idx in timeLineList ) {
                     // 1:disp, 0:not disp
                     addNewTimeLine2List(timeLineList[idx]["t"], timeLineList[idx]["dsp"] == 1  );
@@ -90,7 +109,7 @@
 
 		function createMemoBox(msg_obj, msg_id, timeLineName) {
 			var msgbox = document.createElement("div");
-            msgbox.setAttribute("class", "msgbox");
+            msgbox.setAttribute("class", "memobox");
 
 			var dltbtn = document.createElement("button");
             dltbtn.setAttribute("class", "dltbtn");
@@ -124,23 +143,6 @@
             timeLine.parentNode.removeChild(timeLine);
         }
 
-        function readTimeLine( timeLineName , position) {
-            // タイムラインを読み込む。
-            // いったんクリーンアップしているけど、
-            // 複数並列して表示できるようにしたい
-            cleanupTimeLine();
-
-            // LocalStorageからメモを再読込
-            revertTimeLine( timeLineName, position);
-        }
-
-        // 表示領域を初期化            
-        function cleanupTimeLine() {
-			//var showDiv = document.getElementById("showbox");
-            //while (showDiv.firstChild)
-            //    showDiv.removeChild(showDiv.firstChild);
-        }
-
         // タイムライン表示領域に指定IDのタイムラインを追加
         // TODO set correcto position
         function revertTimeLine( timeLineName , position) {
@@ -151,9 +153,26 @@
             tlwrapper.insertBefore( tlelem, tlwrapper.firstChild );
         }
 
+        function resetTimeLinePosition() {
+            var tlwrapper = document.getElementById("tl_wrapper");
+
+			var tlList = localStorage.getItem( mTimeLineListKey );
+
+            var displayTimeLines = tlwrapper.childNodes;
+            for ( var idx = 0 ; idx < displayTimeLines.length ; idx++ ) {
+                var timeLineElem = displayTimeLines.item(idx);
+                if ( timeLineElem.nodeType == 1) {
+                    var timeLineName = timeLineElem.id.substring("timeline_id_".length);
+                    // console.log(timeLineName);
+                    // TODO timeLineの保持方法がおかしい。
+                    // キーを設定するべきなのに配列になってる。なんだこれ
+                }
+            }
+        }
+
         // メモの入力～タイムライン表示までの要素を作成する
         function createTimeLineElement( timeLineName ){
-            mTimeLineIdPrefix + timeLineName;
+            // mTimeLineIdPrefix + timeLineName;
             var timeLine = document.createElement("div");
             timeLine.setAttribute("class", "timeline");
             timeLine.setAttribute("id", "timeline_id_" + timeLineName);
@@ -227,14 +246,19 @@
 
 			var text = localStorage.getItem( mTimeLineListKey );
             var keyStr;
+            var newTimeLineIdx;
             if ( ! text ) {
-                var keyList = [];
-                keyList[0] = { "t":timeLineName, "id":createLatestTimeLineId() };
-                keyStr = JSON.stringify( keyList );
+                var keyList = {};
             } else {
                 var keyList = JSON.parse(text);
 
                 // 重複確認
+                if ( keyList[timeLineName] ) {
+                    console.log(keyList[idx]["t"] + " but " +  timeLineName + " found in " + idx);
+                    console.log("already exists : " + timeLineName);
+                    // TODO タイムラインの表示
+                }
+                /*
                 for ( var idx in keyList ){
                     if ( keyList[idx]["t"] === timeLineName ){
                         console.log(keyList[idx]["t"] + " but " +  timeLineName + " found in " + idx);
@@ -243,19 +267,26 @@
                         return;
                     }
                 }
-                keyList[keyList.length] = {"t":timeLineName, "id":createLatestTimeLineId() };
-                keyStr = JSON.stringify( keyList );
+                */
             }
+            // TODO create correct time line id
+            var timeLineId = timeLineName;
+            // TODO set correct position : maybe 1.
+            keyList[timeLineId] = {
+                    "t":timeLineName,
+                    "id":createLatestTimeLineId(),
+                    "dsp":1,
+                    "pos":1
+                };
+            keyStr = JSON.stringify( keyList );
             localStorage.setItem( mTimeLineListKey, keyStr );
 
             tlInputElem.value = "";
 
             // タイムライン名をリストに追加
             addNewTimeLine2List(timeLineName, true);
-            // タイムラインの表示領域を初期化
-            cleanupTimeLine();
-            // タイムラインを復元
-            // revertTimeLine( timeLineName, -1);
+
+            resetTimeLinePosition();
         }
 
         // TL名のリストに新規TL名を追加する
@@ -272,30 +303,30 @@
             if ( select ) {
                 timeLineList.setAttribute("class","checked");
                 // TODO set correct position
-                readTimeLine(timeLineName, -1);
+                revertTimeLine(timeLineName, -1);
             } else {
                 timeLineList.setAttribute("class","unchecked");
             }
 
-            var timeLineListRadio = document.createElement("button");
-            timeLineListRadio.setAttribute("type", "button");
-            timeLineListRadio.addEventListener("click", (function(timeLineName) {
+            var timeLineSwitchBtn = document.createElement("button");
+            timeLineSwitchBtn.setAttribute("type", "button");
+            timeLineSwitchBtn.addEventListener("click", (function(timeLineName) {
                     return function() {
                         switchTimeLine (timeLineName);
                     }
                 })( timeLineName ), false);
-            timeLineListRadio.innerHTML = timeLineName;
-            timeLineList.appendChild(timeLineListRadio);
+            timeLineSwitchBtn.innerHTML = timeLineName;
+            timeLineList.appendChild(timeLineSwitchBtn);
 
-            var timeLineListDelete = document.createElement("button");
-            timeLineListDelete.setAttribute("type", "button");
-            timeLineListDelete.innerHTML="X"
-            timeLineListDelete.addEventListener("click", (function(timeLineName) {
+            var timeLineDeleteBtn = document.createElement("button");
+            timeLineDeleteBtn.setAttribute("type", "button");
+            timeLineDeleteBtn.innerHTML="X"
+            timeLineDeleteBtn.addEventListener("click", (function(timeLineName) {
                     return function() {
                         deleteTimeLine(timeLineName)
                     }
                 })( timeLineName ), false);
-            timeLineList.appendChild(timeLineListDelete);
+            timeLineList.appendChild(timeLineDeleteBtn);
 
             tlListElem.insertBefore(timeLineList, tlListElem.firstChild);
         }
@@ -310,25 +341,31 @@
             } else {
                 titleElem.setAttribute("class","checked");
                 // TODO set position
-                readTimeLine(timeLineName, -1);
+                revertTimeLine(timeLineName, -1);
                 changeTitleInfoDisp(timeLineName, true, -1);
             }
+
+            resetTimeLinePosition();
         }
         
 
         function changeTitleInfoDisp(timeLineName, disp, position) {
-                    console.log("try set disp -> " + disp);
             var existsTablesJSON = localStorage.getItem( mTimeLineListKey );
             if ( ! existsTablesJSON ) return;
             var existsTables = JSON.parse( existsTablesJSON );
-            for ( var idx in  existsTables ){ 
+
+            existsTables[timeLineName]["dsp"] = disp ? 1 : 0;
+            existsTables[timeLineName]["pos"] = position;
+
+            /*
+            for ( var idx in existsTables ){ 
                 if ( existsTables[idx]["t"] == timeLineName ){
                     existsTables[idx]["dsp"] = disp ? 1 : 0;
                     existsTables[idx]["pos"] = position;
-                    console.log("set disp -> " + disp);
                     break;
                 }
             }
+            */
             localStorage.setItem( mTimeLineListKey, JSON.stringify(existsTables) );
         }
 
