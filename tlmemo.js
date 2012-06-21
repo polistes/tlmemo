@@ -125,9 +125,13 @@
             msgdatebox.setAttribute("class", "datebox");
             var msg_date = new Date();
             msg_date.setTime(msg_obj.t);
-			msgdatebox.innerHTML = msg_date.getFullYear()  + "/" + (msg_date.getMonth() + 1) + "/" + msg_date.getDate() + " " + 
-                msg_date.getHours() + ":" + msg_date.getMinutes() + ":" + msg_date.getSeconds();
-
+			msgdatebox.innerHTML = msg_date.getFullYear()  + "/" + 
+                digitFormat(msg_date.getMonth() + 1) + "/" + 
+                digitFormat(msg_date.getDate()) + " " + 
+                digitFormat(msg_date.getHours()) + ":" + 
+                digitFormat(msg_date.getMinutes()) + ":" + 
+                digitFormat(msg_date.getSeconds());
+                
 			var msg = document.createElement("div");
             msg.setAttribute("class", "sentence");
 			msg.innerHTML = msg_obj.m;
@@ -137,6 +141,15 @@
 			msgbox.appendChild(msg);
 			return msgbox;
 		}
+
+        function digitFormat(num) {
+            var str = String(num);
+            if ( str.length == 1) {
+                return "0" + str;
+            } else {
+                return str;
+            }
+        }
 
         function hiddenTimeLine(timeLineName){
             var timeLine = document.getElementById( "timeline_id_" + timeLineName );
@@ -156,18 +169,19 @@
         function resetTimeLinePosition() {
             var tlwrapper = document.getElementById("tl_wrapper");
 
-			var tlList = localStorage.getItem( mTimeLineListKey );
+			var tlList = JSON.parse(localStorage.getItem( mTimeLineListKey ));
 
             var displayTimeLines = tlwrapper.childNodes;
             for ( var idx = 0 ; idx < displayTimeLines.length ; idx++ ) {
                 var timeLineElem = displayTimeLines.item(idx);
                 if ( timeLineElem.nodeType == 1) {
                     var timeLineName = timeLineElem.id.substring("timeline_id_".length);
-                    // console.log(timeLineName);
-                    // TODO timeLineの保持方法がおかしい。
-                    // キーを設定するべきなのに配列になってる。なんだこれ
+                    console.log(tlList[timeLineName]["t"] + " : " + tlList[timeLineName]["pos"] + " -> " + idx)
+                    tlList[timeLineName]["pos"] = idx;
                 }
             }
+
+			localStorage.setItem( mTimeLineListKey, JSON.stringify(tlList));
         }
 
         // メモの入力～タイムライン表示までの要素を作成する
@@ -257,17 +271,8 @@
                     console.log(keyList[idx]["t"] + " but " +  timeLineName + " found in " + idx);
                     console.log("already exists : " + timeLineName);
                     // TODO タイムラインの表示
+                    return;
                 }
-                /*
-                for ( var idx in keyList ){
-                    if ( keyList[idx]["t"] === timeLineName ){
-                        console.log(keyList[idx]["t"] + " but " +  timeLineName + " found in " + idx);
-                        console.log("already exists : " + timeLineName);
-                        // TODO タイムラインの表示
-                        return;
-                    }
-                }
-                */
             }
             // TODO create correct time line id
             var timeLineId = timeLineName;
@@ -357,15 +362,6 @@
             existsTables[timeLineName]["dsp"] = disp ? 1 : 0;
             existsTables[timeLineName]["pos"] = position;
 
-            /*
-            for ( var idx in existsTables ){ 
-                if ( existsTables[idx]["t"] == timeLineName ){
-                    existsTables[idx]["dsp"] = disp ? 1 : 0;
-                    existsTables[idx]["pos"] = position;
-                    break;
-                }
-            }
-            */
             localStorage.setItem( mTimeLineListKey, JSON.stringify(existsTables) );
         }
 
