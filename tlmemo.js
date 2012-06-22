@@ -7,6 +7,8 @@
         var mTimeLineIdPrefix = "tlmemo_table_name_"
         var mMemoLatestId = "tlmemo_memo_lastest_id"
         var mTLMemoLatestId = "tlmemo_timeline_latest_id"
+
+        var mTimeLineDisplayKey = "tlmemo_timeline_disp_id"
  
 		window.onload = function() {
 			// ＤＯＭオブジェクトを読み込む
@@ -37,6 +39,12 @@
                 for ( var idx in timeLineList ) {
                     // 1:disp, 0:not disp
                     addNewTimeLine2List(timeLineList[idx]["t"], timeLineList[idx]["dsp"] == 1  );
+                }
+                
+			    var displayTL = JSON.parse( localStorage.getItem( mTimeLineDisplayKey ) );
+                for ( var idx = displayTL.length - 1 ; idx >=0 ; idx-- ) {
+                    console.log(displayTL[idx]);
+                    revertTimeLine( displayTL[idx] , -1);
                 }
             }
 
@@ -169,19 +177,17 @@
         function resetTimeLinePosition() {
             var tlwrapper = document.getElementById("tl_wrapper");
 
-			var tlList = JSON.parse(localStorage.getItem( mTimeLineListKey ));
-
+            var dispObj = [];
             var displayTimeLines = tlwrapper.childNodes;
             for ( var idx = 0 ; idx < displayTimeLines.length ; idx++ ) {
                 var timeLineElem = displayTimeLines.item(idx);
                 if ( timeLineElem.nodeType == 1) {
                     var timeLineName = timeLineElem.id.substring("timeline_id_".length);
-                    console.log(tlList[timeLineName]["t"] + " : " + tlList[timeLineName]["pos"] + " -> " + idx)
-                    tlList[timeLineName]["pos"] = idx;
+                    dispObj[idx] = timeLineName;
                 }
             }
 
-			localStorage.setItem( mTimeLineListKey, JSON.stringify(tlList));
+			localStorage.setItem( mTimeLineDisplayKey, JSON.stringify(dispObj));
         }
 
         // メモの入力～タイムライン表示までの要素を作成する
@@ -291,6 +297,8 @@
             // タイムライン名をリストに追加
             addNewTimeLine2List(timeLineName, true);
 
+            revertTimeLine(timeLineName, -1);
+
             resetTimeLinePosition();
         }
 
@@ -308,7 +316,7 @@
             if ( select ) {
                 timeLineList.setAttribute("class","checked");
                 // TODO set correct position
-                revertTimeLine(timeLineName, -1);
+                // revertTimeLine(timeLineName, -1);
             } else {
                 timeLineList.setAttribute("class","unchecked");
             }
